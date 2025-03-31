@@ -14,18 +14,16 @@ class Dotenv:
             return None
 
         elif "," in dotenv_value:
-            dotenv_value = self.get_list(dotenv_value)
+            dotenv_value = self.get_list(dotenv_value, key_name)
 
         return dotenv_value
 
     #? splits string intro array by "," and return stripped strings 
     @staticmethod
-    def get_list(data: str):
-        return [item.strip() for item in data.split(",")]
+    def get_list(data: str, key_name: str = None):
+        items = [item.strip() for item in data.split(",")] 
 
+        if "id" in key_name or "ID" in key_name:
+            items = [int(item) for item in items]
 
-#? for testing purposes
-# Dotenv()
-# print("🐍  config", self.config)
-# print("🐍  mongoDB", self.get("MONGODB"))
-# print("🐍  user_ids: ", self.get("USER_IDS"))
+        return items
