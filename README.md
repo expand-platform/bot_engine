@@ -26,17 +26,25 @@ There you will see ready-to-use constants loaded right from your .env file.
 
 You can easily create initial users in your DB by doing this:
 
-1. Create folder data with file initials_users.py. Place array of initial users with dictionaries:
+1. Create folder "data" with a file "initials_users.py". Place an array of initial users with dictionaries:
 
+INITIAL_USERS = 
 [
     {
         "real_name": "Valeriy",
+        "id": 123,
         "access_level": "user" or "admin",
+        "any_other_data": any,
     },
     ...
 ]
 
-And call Database().fill_initial_users(your_array_of_users) method to fill your DB with initial users. That's simple!
+Then call method Database().add_users(INITIAL_USERS) to fill your DB with initial users. This is an optional one-time operation for setting up your first users in DB. That's simple!
+
+
+### A data security minute
+
+You can leave the file "initials_users.py" in your project. Just add it to .gitignore to prevent the leakout of the data.
 
 
 ## Step 3. Run the bot

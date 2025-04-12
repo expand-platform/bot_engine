@@ -1,3 +1,6 @@
+run:
+	py bot_engine/main.py
+
 test:
 	poetry run pytest -s tests/
 

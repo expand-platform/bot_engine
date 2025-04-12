@@ -1,9 +1,17 @@
+from os import getenv
+
 from telebot.types import Message
 from datetime import datetime
 
-from bot_engine.custom_types.UserT import UserT
+if getenv("ENVIRONMENT") == "testing":
+    from users.UserT import UserT
+    from languages.Language import Language
 
-from bot_engine.languages.Language import Language
+else:
+    from bot_engine.users.UserT import UserT
+    from bot_engine.languages.Language import Language
+
+
 
 class NewInitialGuest:
     """ base class for adding new users to DB """

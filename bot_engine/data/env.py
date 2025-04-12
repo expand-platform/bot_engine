@@ -13,7 +13,10 @@ ENVIRONMENT = dotenv.get("ENVIRONMENT")
 PORT = dotenv.get("PORT")
 
 BOT_TOKEN = dotenv.get("BOT_TOKEN")
+
 MONGODB_TOKEN = dotenv.get("MONGODB_TOKEN")
+DATABASE_NAME = dotenv.get("DATABASE_NAME")
+REPLICA_NAME = dotenv.get("REPLICA_NAME")
 
 #? Dear admins, don't forget to start a chat with your bot (/start) 
 ADMIN_IDS = dotenv.get("ADMIN_IDS")

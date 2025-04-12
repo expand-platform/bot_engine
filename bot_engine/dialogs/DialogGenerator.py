@@ -9,7 +9,7 @@ from telebot.types import (
 )
 from telebot.states.sync.context import StateContext
 
-from bot_engine.custom_types.UserT import UserT
+from bot_engine.users.UserT import UserT
 
 from bot_engine.database.MongoDB import MongoDB
 from bot_engine.utils.Logger import Logger

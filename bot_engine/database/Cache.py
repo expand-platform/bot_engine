@@ -1,29 +1,41 @@
-from bot_engine.utils.Logger import Logger
-from bot_engine.users.InitialUsers import InitialUsers
-from bot_engine.users.NewUser import NewUser
+from os import getenv
+
+if getenv("ENVIRONMENT") == "testing":
+    from data.env import ENVIRONMENT, BOT_TOKEN, ADMIN_IDS, SUPER_ADMIN_ID
+    from data.config import USER_ID_KEY
+    from users.UserT import UserT    
+    from users.NewUser import NewUser
+
+else:
+    from bot_engine.data.env import ENVIRONMENT, BOT_TOKEN, ADMIN_IDS, SUPER_ADMIN_ID
+    from bot_engine.data.config import USER_ID_KEY
+    from bot_engine.users.NewUser import NewUser
+    from bot_engine.users.UserT import UserT    
+
 
 
 class Cache:
-    _cache_instance = None
-    
-    users: list = None
-    admin_ids: list = None
+    _cache_instance: "Cache" = None
+    users: list[UserT] = None
     
     def __new__(cls, *args, **kwargs):
         if cls._cache_instance is None:
             cls._cache_instance = super().__new__(cls)
-            
             cls._cache_instance.users = []
-            cls._cache_instance.admin_ids = InitialUsers().get_admin_ids()
         
         return cls._cache_instance
     
     def __init__(self):
-        self.log = Logger().info
+        pass
     
             
-    def cache_user(self, new_user: dict) -> None:
-        self.users.append(new_user)
+    def cache_user(self, new_user: UserT) -> None:
+        is_user_in_cache = self.check_if_user_exists(new_user[USER_ID_KEY])
+
+        if is_user_in_cache:
+            return
+        else: 
+            self.users.append(new_user)
         
         
     def get_users_from_cache(self) -> list:
@@ -70,7 +82,17 @@ class Cache:
                 self.users.remove(cache_user)
                 print(f"User removed from cache!")
                 
+    
+    def check_if_user_exists(self, user_id: int) -> bool:
+        for user in self.users:
+            if user[USER_ID_KEY] == user_id:
+                print(f"🟡 user exists in Cache: {user_id}")
+                return True
+            else:
+                print(f"🔴 user doesn't exists in Cache: {user_id}")
+                return False
         
+
     
     def find_user_by_property(self, property_name, value):
         for user in self.users:
@@ -81,10 +103,13 @@ class Cache:
                 
 
     def clean_users(self):
+        """ cleans all users, except super_admin """
         self.users = []
-        self.log(f"Кеш пользователей очищен! 🧹")
         
-        initial_users = InitialUsers().get_initial_users()
-        admin = NewUser().create_new_user(user_info=initial_users[0])
+        for user in self.users:
+            if user[USER_ID_KEY] == SUPER_ADMIN_ID:
+                pass
+            else:
+                self.users.remove(user)
         
-        self.cache_user(admin)
+        print(f"Кеш пользователей очищен! 🧹\n{self.users}")

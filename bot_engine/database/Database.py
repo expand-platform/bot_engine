@@ -1,54 +1,76 @@
+from os import getenv
 from datetime import datetime
 
+from typing import List, Optional
 from telebot.types import Message
-from bot_engine.utils.Logger import Logger
-
-from bot_engine.users.NewUser import NewGuest, NewUser
-
-from bot_engine.database.Cache import Cache
-from bot_engine.users.InitialUsers import InitialUsers
-from bot_engine.database.MongoDB import MongoDB
 
 
-#! В кеше лежат InitialUsers, нужно как-то их отделить
+if getenv("ENVIRONMENT") == "testing":
+    from data.env import ENVIRONMENT, BOT_TOKEN, ADMIN_IDS, SUPER_ADMIN_ID
+    from data.config import USER_ID_KEY
+    from users.UserT import UserT  
+
+    from users.NewUser import NewGuest, NewUser
+
+    from database.MongoDB import MongoDB
+    from database.Cache import Cache
+
+else:
+    from data.env import ENVIRONMENT, BOT_TOKEN, ADMIN_IDS, SUPER_ADMIN_ID
+    from bot_engine.data.config import USER_ID_KEY
+    from bot_engine.users.UserT import UserT  
+
+    from bot_engine.users.NewUser import NewGuest, NewUser
+
+    from bot_engine.database.MongoDB import MongoDB
+    from bot_engine.database.Cache import Cache
+
+
+
 class Database:
-    """ Higher-level class for syncing Cache (users) and MongoDB """
+    """ Higher-level class for syncing data in MongoDB and Cache (users, versions etc)"""
 
-    _db_instance = None
+    _db_instance: Optional["Database"] = None
+    Cache: Optional["Cache"] = None
+    MongoDB: "MongoDB" = None
     
-    initial_users: list = None
-    cache: Cache = None
-    admins_id: list = None
-    
+
     def __new__(cls, *args, **kwargs):
         if cls._db_instance is None:
             cls._db_instance = super(Database, cls).__new__(cls)
-            
-            # pin user ids once
-            InitialUsers().pin_ids_to_users()
-            
-            cls._db_instance.initial_users = InitialUsers().get_initial_users()
-            cls._db_instance.cache = Cache()
-            cls._db_instance.admin_ids = Cache().get_admin_ids()
+            cls._db_instance.Cache = Cache()
+            cls._db_instance.MongoDB = MongoDB()    
             
         return cls._db_instance
     
     
     def __init__(self):
-        self.log = Logger().info
-        self.mongoDB = MongoDB()
+        pass
+
+
+    def add_user(self, new_user: UserT):
+        self.MongoDB.add_user(new_user)
+        self.Cache.cache_user(new_user)
+    
+
+    def add_users(self, users: list[UserT]):
+        """saves user to MongoDB and Cache"""
+        for user in users:
+            self.MongoDB.add_user(user)
+            self.Cache.cache_user(user)
         
+
     def get_users(self):
-        return self.cache.users
+        return self.Cache.users
         
+
     #! reduce number of times this method has been called
     #! for super fast time-to-response
     #! Now it's called 3 times: Filters, / command and maybe somewhere else (use search for set_active_user)
     def get_active_user(self, message: Message):
         # self.log(f"looking for user_id { message.from_user.id }...")
-        active_user = self.cache.find_active_user(user_id=message.chat.id)
+        active_user = self.Cache.find_active_user(user_id=message.chat.id)
         
-
         if active_user:
             self.log(f"👌 this user is in cache: { active_user }")
 
@@ -61,7 +83,7 @@ class Database:
             # self.log(f"👐 wow, it's someone new: { active_user }")
             new_guest = NewGuest(message).create_new_guest()
             
-            self.mongoDB.save_user(new_guest)
+            self.MongoDB.add_user(new_guest)
             
             # cache user after it's being registered
             self.update_cache_users()
@@ -69,8 +91,8 @@ class Database:
 
 
     def remove_user(self, user_id: int = None) -> None:
-        self.mongoDB.remove_user(user_id)
-        self.cache.remove_user(user_id)
+        self.MongoDB.remove_user(user_id)
+        self.Cache.remove_user(user_id)
         print(f"User fully removed from Database!")
          
 
@@ -85,65 +107,66 @@ class Database:
         self.update_cache_users()
     
             
-    def update_remote_users(self):
-        # save initial users to database
-        for initial_user in self.initial_users:
-            filter_by_id = { "user_id": initial_user["user_id"] }
-            is_user_exists_in_db = self.mongoDB.users_collection.find_one(filter=filter_by_id)
+    # def update_remote_users(self):
+    #     # save initial users to database
+    #     for initial_user in self.initial_users:
+    #         filter_by_id = { "user_id": initial_user["user_id"] }
+    #         is_user_exists_in_db = self.MongoDB.users_collection.find_one(filter=filter_by_id)
             
-            if not is_user_exists_in_db:
-                # self.log(f"❌ user doesn't exist, here's id: { initial_user["user_id"] }")
+    #         if not is_user_exists_in_db:
+    #             # self.log(f"❌ user doesn't exist, here's id: { initial_user["user_id"] }")
 
-                new_user = NewUser().create_new_user(initial_user)
-                # self.complete_user_profile(new_user)
+    #             new_user = NewUser().create_new_user(initial_user)
+    #             # self.complete_user_profile(new_user)
                 
-                self.mongoDB.save_user(new_user)
+    #             self.MongoDB.save_user(new_user)
             
-            # if user exists:
-            # self.log(f"✔ user exist: { initial_user["real_name"]}")
+    #         # if user exists:
+    #         # self.log(f"✔ user exist: { initial_user["real_name"]}")
 
 
-    def update_cache_users(self):
-        mongo_users = self.mongoDB.get_all_users()
+    # def update_cache_users(self):
+    #     mongo_users = self.MongoDB.get_all_users()
         
-        # self.log(f"mongo_users len: { len(mongo_users) }")
-        # self.log(f"initial_users len: { len(self.initial_users) }")
+    #     # self.log(f"mongo_users len: { len(mongo_users) }")
+    #     # self.log(f"initial_users len: { len(self.initial_users) }")
 
-        # no Mongo backup
-        if not len(mongo_users) or len(mongo_users) == 0:
-            self.cache_initial_users()
+    #     # no Mongo backup
+    #     if not len(mongo_users) or len(mongo_users) == 0:
+    #         self.cache_initial_users()
         
-        # fetch users by default (once)
-        else:
-            self.cache_mongo_users()
+    #     # fetch users by default (once)
+    #     else:
+    #         self.cache_mongo_users()
             
         
             
-    def cache_initial_users(self):
-        for initial_user in self.initial_users:
-            new_user = NewUser().create_new_user(initial_user)
-            self.cache.cache_user(new_user)
+    # def cache_initial_users(self):
+    #     for initial_user in self.initial_users:
+    #         new_user = NewUser().create_new_user(initial_user)
+    #         self.Cache.cache_user(new_user)
             # self.cached_users.append(new_user)
 
         # self.log(f"🔀 saved initial users to cache: { self.cache.cached_users }")
 
 
     def cache_mongo_users(self):
-        self.cache.clean_users() # 1 user is left: admin
-        mongo_users = self.mongoDB.get_all_users()
+        self.Cache.clean_users() # 1 user is left: admin
+        mongo_users = self.MongoDB.get_all_users()
         
         #! Костыль detected
         #! skip first user from db: admin
         for mongo_user in mongo_users:
-            self.cache.cache_user(mongo_user)
+            self.Cache.cache_user(mongo_user)
             # self.cached_users.append(mongo_user)
             
         # self.log(f"🏡 cache filled with MongoDB: { self.cache.cached_users }")
             
             
     def clean_users(self):
-        self.mongoDB.clean_users()
-        self.cache.clean_users()
+        """ cleans users in MongoDB and Cache"""
+        self.MongoDB.clean_users()
+        self.Cache.clean_users()
         
         
     #? active user methods
@@ -181,15 +204,15 @@ class Database:
         return real_name, last_name
     
     
-    
     def update_user(self, user: dict, key: str, new_value: str | int | bool):
-        self.mongoDB.update_user(user_id=user["user_id"], key=key, new_value=new_value)
-        self.cache.update_user(user_id=user["user_id"], key=key, new_value=new_value)
+        self.MongoDB.update_user(user_id=user["user_id"], key=key, new_value=new_value)
+        self.Cache.update_user(user_id=user["user_id"], key=key, new_value=new_value)
         
         real_name, last_name = self.get_real_name(user)
         self.log(f"📅 Пользователь обновлён (update_user): { real_name } { last_name }")
-        
-    
+
+
+    #! maybe there's a need to separate this from Database class?
     def update_lessons(self, message: Message):
         # работа с данными, затем с кешом и монго
         active_user = self.get_active_user(message)
@@ -208,7 +231,7 @@ class Database:
             "lessons_left": active_user["lessons_left"]
         }
         
-         
+    #! maybe there's a need to separate this from Database class?
     def check_done_reports_limit(self, max_lessons: int, done_lessons: int) -> bool:
         is_report_allowed = False
         
@@ -241,13 +264,16 @@ class Database:
         self.log(f"is_report_allowed: { is_report_allowed }")
         return is_report_allowed
         
-    #! Вынести в класс Time
+
+    #! Вынести в класс Schedule
     def week_of_month(self, dt):
         first_day = dt.replace(day=1)
         date_of_month = dt.day
         adjusted_dom = date_of_month + first_day.weekday()  # Weekday ranges from 0 (Monday) to 6 (Sunday)
         return (adjusted_dom - 1) // 7 + 1
+    
 
+    #! Вынести в класс Schedule
     def make_monthly_reset(self):
         users = self.get_users()
         

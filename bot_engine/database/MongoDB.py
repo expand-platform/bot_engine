@@ -1,115 +1,121 @@
-from calendar import c
+# from calendar import c
+from os import getenv
 from datetime import datetime, timedelta
 
 from pymongo import MongoClient
 from pymongo.collection import Collection
 from pymongo.database import Database
 
-from bot_engine.utils.Logger import Logger
-from bot_engine.utils.Dotenv import Dotenv
-#! created manually, but can be add as consts
+if getenv("ENVIRONMENT") == "testing":
+    from data.env import ENVIRONMENT, MONGODB_TOKEN, DATABASE_NAME, REPLICA_NAME, SUPER_ADMIN_ID
+    from data.config import USER_ID_KEY, USER_COLLECTION, DATABASE_CONNECTIONS_LIMIT
+    from users.UserT import UserT
+
+else:
+    from bot_engine.data.env import ENVIRONMENT, MONGODB_TOKEN, DATABASE_NAME, REPLICA_NAME, SUPER_ADMIN_ID
+    from bot_engine.data.config import USER_ID_KEY, DATABASE_CONNECTIONS_LIMIT
+    from bot_engine.users.UserT import UserT
+
+
+#! data has to be created manually, but can be add as consts
 # from languages.Ru import MONTHS_RU
-from bot_engine.users.InitialUsers import InitialUsers
-
 # from data.schedule_days import SCHEDULE_DAYS
-
-#! load from env
-# from config.database import DATABASE
 
 
 class MongoDB:
     _mongoDB_instance = None
-
-    client: MongoClient = None
+    _client: MongoClient = None
 
     database: Database = None
     replica_db: Database = None
 
     def __new__(cls, *args, **kwargs):
-        #! load from env
-        # DATABASE_NAME = DATABASE["name"]
-        # REPLICA_DB_NAME = DATABASE["replica"]["name"]
-
-        MONGO_URI = Dotenv().mongodb_string
-
         if cls._mongoDB_instance is None:
             cls._mongoDB_instance = super().__new__(cls)
-            cls._mongoDB_instance.client = MongoClient(MONGO_URI, maxPoolSize=1)
-            #! 
-            # cls._mongoDB_instance.database = cls._mongoDB_instance.client[DATABASE_NAME]
-            # cls._mongoDB_instance.replica_db = cls._mongoDB_instance.client[
-            #     REPLICA_DB_NAME
-            # ]
-
-            # Logger().info(f"База данных {DATABASE_NAME} подключена!")
+            cls._mongoDB_instance._client = MongoClient(MONGODB_TOKEN, maxPoolSize=DATABASE_CONNECTIONS_LIMIT)
+            cls._mongoDB_instance.database = cls._mongoDB_instance._client[DATABASE_NAME]
+            cls._mongoDB_instance.replica_db = cls._mongoDB_instance._client[
+                REPLICA_NAME
+            ]
+            print(f"База данных {DATABASE_NAME} подключена!")
 
         return cls._mongoDB_instance
 
-    def __init__(self) -> None:
-        self.log = Logger().info
-        self.dotenv = Dotenv()
 
+    def __init__(self) -> None:
         # ? bot's collections
-        self.users_collection: Collection = self.database["users"]
+        self.users_collection: Collection = self.database[USER_COLLECTION]
         self.versions_collection: Collection = self.database["versions"]
         self.schedule_collection: Collection = self.database["schedule"]
 
         #? handles schedule days
-        self.ScheduleDays = ScheduleDays(self.schedule_collection)
+        # self.ScheduleDays = ScheduleDays(self.schedule_collection)
+
 
     def show_users(self):
-        self.log(f"Коллекция юзеров: {list(self.users_collection.find({}))}")
+        print(f"Коллекция юзеров: {list(self.users_collection.find({}))}")
+
 
     def get_all_users(self):
         return list(self.users_collection.find({}))
 
+
     def get_all_versions(self):
         return list(self.versions_collection.find({}))
+
 
     def get_replica_documents(self, collection_name="users"):
         return list(self.replica_db[collection_name].find({}))
 
+
     def get_all_documents(self, database_name="school-bot", collection_name="users"):
-        database = self.client[database_name]
+        database = self._client[database_name]
 
         return list(database[collection_name].find({}))
 
-    def check_if_user_exists(self):
+
+    def check_if_user_exists(self, user_id: int):
         """returns True if user is in the collection, False - if not"""
-        user = self.users_collection.find_one({"user_id": self.user_id})
+        user = self.users_collection.find_one({USER_ID_KEY: user_id})
 
         if user:
-            # self.log(f"Чувачок (чувиха) с id {self.user_id} уже зарегистрирован(а) в БД")
             return True
         else:
-            # self.log(f"Новенький юзер с id {self.user_id}! Сохраняю в базу данных... 😋")
             return False
 
-    def save_user(self, new_user: dict) -> None:
-        self.users_collection.insert_one(new_user)
-        # self.log(f"before: { new_user }  ⏳ ")
 
-        self.log(f"Юзер с id { new_user["user_id"] } сохранён в БД ⏳ ")
+    #! Ещё оно должно формировать NewUser / NewGuest
+    def add_user(self, new_user: UserT) -> None:
+        user_is_in_db = self.check_if_user_exists(new_user[USER_ID_KEY])
+
+        if not user_is_in_db:
+            self.users_collection.insert_one(new_user)
+            print(f"🟢 Юзер с id { new_user[USER_ID_KEY] } сохранён в БД")
+        else: 
+            print(f"🟡 Юзер с id { new_user[USER_ID_KEY] } уже есть в БД")
+
 
     def remove_user(self, user_id: int) -> None:
         filter = {"user_id": user_id}
         self.users_collection.delete_one(filter=filter)
         print(f"User removed from MongoDB!")
 
+
     def update_user(self, user_id: int, key: str, new_value: str | int | bool):
-        filter_by_id = {"user_id": user_id}
+        filter_by_id = {USER_ID_KEY: user_id}
         update_operation = {"$set": {key: new_value}}
 
         self.users_collection.update_one(filter=filter_by_id, update=update_operation)
 
-    # ? Admin commands
 
+    # ? Admin commands
     def clean_users(self):
-        admin_ids = InitialUsers().admin_ids
-        delete_filter = {"user_id": {"$nin": admin_ids}}
+        delete_filter = {USER_ID_KEY: {"$nin": [SUPER_ADMIN_ID]}}
+        # delete_filter = {}
 
         self.users_collection.delete_many(filter=delete_filter)
-        self.log(f"Коллекция пользователей MongoDB очищена! 🧹")
+        print(f"🧹 Коллекция users очищена (все, кроме админа {SUPER_ADMIN_ID})!")
+
 
     # ? Versions
     def get_latest_versions_info(self, versions_limit: int = 3):
@@ -123,10 +129,11 @@ class MongoDB:
 
         return latest_versions
 
+
     def send_new_version_update(self, version_number: int, changelog: str):
         now = datetime.now()
 
-        if Dotenv().environment == "production":
+        if ENVIRONMENT == "production":
             now = now + timedelta(hours=3)
 
         #! 
@@ -143,7 +150,8 @@ class MongoDB:
 
         self.versions_collection.insert_one(new_update)
 
-        self.log(f"⌛ New version { version_number } published! ")
+        print(f"⌛ New version { version_number } published! ")
+
 
     def replicate_collection(self, collection_name: str = "users"):
         """replicates users or versions collection"""
@@ -158,7 +166,8 @@ class MongoDB:
         replica_collection.delete_many({})
         replica_collection.insert_many(existing_documents)
 
-        self.log(f"Коллекция {collection_name} успешно реплицирована 🐱‍🐉")
+        print(f"Коллекция {collection_name} успешно реплицирована 🐱‍🐉")
+
 
     def load_replica(self, collection_name: str = "users"):
         collection_to_erase = self.database[collection_name]
@@ -170,7 +179,7 @@ class MongoDB:
 
         collection_to_erase.insert_many(new_documents)
 
-        self.log(
+        print(
             f"Коллекция {collection_name} успешно восстановлена из реплики в основную базу данных! 🐱‍🐉"
         )
 

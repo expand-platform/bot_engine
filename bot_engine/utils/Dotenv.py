@@ -10,7 +10,7 @@ class Dotenv:
         dotenv_value = self.config.get(key_name)
 
         if dotenv_value is None:
-            print(f"🔴 key {key_name} in .env file isn't found!")
+            print(f"🔴 CRITICAL: you must set the key '{key_name}' in your .env file!")
             return None
 
         elif "," in dotenv_value:
