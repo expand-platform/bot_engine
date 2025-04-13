@@ -5,18 +5,16 @@ from telebot.custom_filters import AdvancedCustomFilter
 from telebot.types import Message, CallbackQuery
 
 if getenv("ENVIRONMENT") == "testing":
-    from bot.Bot import Bot
     from database.Database import Database
 
 else:
-    from bot_engine.bot.Bot import Bot
     from bot_engine.database.Database import Database
 
 
 class AccessLevelFilter(AdvancedCustomFilter):
     key = 'access_level'
 
-    def __init__(self, bot: "Bot"):
+    def __init__(self, bot):
         self.bot = bot
         
 

@@ -1,34 +1,27 @@
-from os import getenv
+# Шаблон для создания юзеров при первом запуске
 
-if getenv("ENVIRONMENT") == "testing":
-    from users.UserT import UserT
-
-else:
-    from bot_engine.users.UserT import UserT
-
-
-access_levels = {
-    "user": "student",
-    "admin": "admin",
-}
-
-
-ADMINS: UserT = [
+ADMINS = [
     {
-        "real_name": "Дамир",
+        "real_name": "Дамiр",
         "user_id": 331697498,
         "chat_id": 331697498,
-        "access_level": access_levels["admin"], 
+        "access_level": "admin", 
     },
     {
-        "real_name": "Дамир (2)",
+        "real_name": "Даня",
+        "user_id": 1402095363,
+        "chat_id": 1402095363,
+        "access_level": "admin", 
+    },
+    {
+        "real_name": "Вадiм",
         "user_id": 7301044653,
         "chat_id": 7301044653,
-        "access_level": access_levels["admin"],
+        "access_level": "admin",
     },
 ]
 
-USERS: UserT = [
+USERS = [
     {
         "real_name": "Кирилл",
         "last_name": "Кипчарский",
@@ -36,7 +29,7 @@ USERS: UserT = [
         "chat_id": 782692408,
         "payment_amount": 0,
         "max_lessons": 4,
-        "access_level": access_levels["user"],
+        "access_level": "user",
     },
     {
         "real_name": "Ярослав",
@@ -45,7 +38,7 @@ USERS: UserT = [
         "chat_id": 549683719,
         "payment_amount": 195,
         "max_lessons": 8,
-        "access_level": access_levels["user"],
+        "access_level": "user",
     },
     {
         "real_name": "Ира",
@@ -54,7 +47,7 @@ USERS: UserT = [
         "chat_id": 1898742332,
         "payment_amount": 70,
         "max_lessons": 4,
-        "access_level": access_levels["user"],
+        "access_level": "user",
     },
     {
         "real_name": "Даня",
@@ -63,7 +56,7 @@ USERS: UserT = [
         "chat_id": 1402095363,
         "payment_amount": 30,
         "max_lessons": 4,
-        "access_level": access_levels["user"],
+        "access_level": "user",
     },
     {
         "real_name": "Артём",
@@ -72,7 +65,7 @@ USERS: UserT = [
         "chat_id": 5558192771,
         "payment_amount": 70,
         "max_lessons": 4,
-        "access_level": access_levels["user"],
+        "access_level": "user",
     },
     {
         "real_name": "Максим",
@@ -81,7 +74,7 @@ USERS: UserT = [
         "chat_id": 916570935,
         "payment_amount": 70,
         "max_lessons": 4,
-        "access_level": access_levels["user"],
+        "access_level": "user",
     },
     {
         "real_name": "Назар",
@@ -90,7 +83,7 @@ USERS: UserT = [
         "chat_id": 736696668,
         "payment_amount": 70,
         "max_lessons": 4,
-        "access_level": access_levels["user"],
+        "access_level": "user",
     },
     {
         "real_name": "Дима",
@@ -99,7 +92,7 @@ USERS: UserT = [
         "chat_id": 1356631201,
         "payment_amount": 70,
         "max_lessons": 4,
-        "access_level": access_levels["user"],
+        "access_level": "user",
     },
     {
         "real_name": "Илья",
@@ -108,7 +101,7 @@ USERS: UserT = [
         "chat_id": 1322753193,
         "payment_amount": 1700,
         "max_lessons": 4,
-        "access_level": access_levels["user"],
+        "access_level": "user",
     },
     {
         "real_name": "Андрей",
@@ -117,7 +110,7 @@ USERS: UserT = [
         "chat_id": 837214225,
         "payment_amount": 85,
         "max_lessons": 4,
-        "access_level": access_levels["user"],
+        "access_level": "user",
     },
     {
         "real_name": "Олег",
@@ -126,8 +119,6 @@ USERS: UserT = [
         "chat_id": 782694924,
         "payment_amount": 70,
         "max_lessons": 4,
-        "access_level": access_levels["user"],
+        "access_level": "user",
     },
 ]
-
-INITIAL_USERS: list[UserT] = ADMINS + USERS

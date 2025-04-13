@@ -7,12 +7,12 @@ from pymongo.collection import Collection
 from pymongo.database import Database
 
 if getenv("ENVIRONMENT") == "testing":
-    from data.env import ENVIRONMENT, MONGODB_TOKEN, DATABASE_NAME, REPLICA_NAME, SUPER_ADMIN_ID
+    from data.env import ENVIRONMENT, MONGODB_TOKEN, DATABASE_NAME, REPLICA_NAME
     from data.config import USER_ID_KEY, USER_COLLECTION, DATABASE_CONNECTIONS_LIMIT
     from users.UserT import UserT
 
 else:
-    from bot_engine.data.env import ENVIRONMENT, MONGODB_TOKEN, DATABASE_NAME, REPLICA_NAME, SUPER_ADMIN_ID
+    from bot_engine.data.env import ENVIRONMENT, MONGODB_TOKEN, DATABASE_NAME, REPLICA_NAME
     from bot_engine.data.config import USER_ID_KEY, DATABASE_CONNECTIONS_LIMIT
     from bot_engine.users.UserT import UserT
 
