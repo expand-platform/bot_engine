@@ -10,12 +10,10 @@ from telebot.custom_filters import StateFilter, IsDigitFilter, TextMatchFilter
 if getenv("ENVIRONMENT") == "testing":
     from bot.Filters import AccessLevelFilter
     from data.env import ENVIRONMENT, BOT_TOKEN, ADMIN_IDS, SUPER_ADMIN_ID
-    # from database.Cache import Cache
 
 else:
     from bot_engine.bot.Filters import AccessLevelFilter
     from bot_engine.data.env import ENVIRONMENT, BOT_TOKEN, ADMIN_IDS, SUPER_ADMIN_ID
-    # from bot_engine.database.Cache import Cache
 
 
 
