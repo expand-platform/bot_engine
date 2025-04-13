@@ -8,27 +8,32 @@ else:
 
 
 class Language:
-    """ 
-        Sets the default language from the .env on the creation. 
-        Changes language through method, if needed 
     """
+    Sets the default language from the .env on the creation.
+    Changes language through method, if needed
+    """
+
     _instance = None
+    _is_initialized = False
 
-    active_lang: str
-    commands: dict[str, str]
-    bot_messages: dict[str, str]
-
-    def __new__(cls, menu_commands: dict[str, str], bot_messages: dict[str, str]):
+    def __new__(cls, *args, **kwargs):
         if cls._instance is None:
             cls._instance = super().__new__(cls)
-            cls._instance.active_lang = DEFAULT_LANGUAGE
-            cls._instance.commands = menu_commands
-            cls._instance.messages = bot_messages
 
         return cls._instance
 
-    def __init__(self) -> None:
-        pass
+
+    def __init__(
+        self, menu_commands: dict[str, str] = None, bot_messages: dict[str, str] = None
+    ):
+        if not self.__class__._is_initialized:
+            if menu_commands is None or bot_messages is None:
+                raise ValueError("First initialization requires commands and messages")
+
+            self.active_lang = DEFAULT_LANGUAGE
+            self.commands = menu_commands
+            self.messages = bot_messages
+            self.__class__._is_initialized = True
 
     def change_language(self, new_language: str, new_commands, new_messages):
         self.active_lang = new_language

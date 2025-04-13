@@ -54,7 +54,7 @@ class DialogGenerator:
         return cls._instance
 
 
-    def __init__(self):
+    def __init__(self, guest_slash_commands: dict[str, str], user_slash_commands: dict[str, str], admin_slash_commands: dict[str, str]):
         self.bot = Bot()
         self.messages = Language().messages
 
