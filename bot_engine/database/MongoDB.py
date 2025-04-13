@@ -13,7 +13,7 @@ if getenv("ENVIRONMENT") == "testing":
 
 else:
     from bot_engine.data.env import ENVIRONMENT, MONGODB_TOKEN, DATABASE_NAME, REPLICA_NAME, SUPER_ADMIN_ID
-    from bot_engine.data.config import USER_ID_KEY, DATABASE_CONNECTIONS_LIMIT
+    from bot_engine.data.config import USER_ID_KEY, USER_COLLECTION,DATABASE_CONNECTIONS_LIMIT
     from bot_engine.users.UserT import UserT
 
 
