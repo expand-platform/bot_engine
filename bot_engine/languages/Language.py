@@ -12,20 +12,20 @@ class Language:
         Sets the default language from the .env on the creation. 
         Changes language through method, if needed 
     """
-    _language_instance = None
+    _instance = None
 
     active_lang: str
     commands: dict[str, str]
     bot_messages: dict[str, str]
 
     def __new__(cls, menu_commands: dict[str, str], bot_messages: dict[str, str]):
-        if cls._language_instance is None:
-            cls._language_instance = super().__new__(cls)
-            cls._language_instance.active_lang = DEFAULT_LANGUAGE
-            cls._language_instance.commands = menu_commands
-            cls._language_instance.messages = bot_messages
+        if cls._instance is None:
+            cls._instance = super().__new__(cls)
+            cls._instance.active_lang = DEFAULT_LANGUAGE
+            cls._instance.commands = menu_commands
+            cls._instance.messages = bot_messages
 
-        return cls._language_instance
+        return cls._instance
 
     def __init__(self) -> None:
         pass

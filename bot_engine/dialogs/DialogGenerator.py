@@ -6,6 +6,7 @@ from telebot.types import (
     InlineKeyboardMarkup,
     InlineKeyboardButton,
     CallbackQuery,
+    BotCommand
 )
 from telebot.states.sync.context import StateContext
 
@@ -36,13 +37,27 @@ else:
     from bot_engine.languages.Language import Language
 
 
-#! load to constructor
-# from dialogs.data.commands_list import GUEST_SLASH_COMMANDS, STUDENT_SLASH_COMMANDS
-
 class DialogGenerator:
+    _instance = None
+
+    _guest_slash_commands: list[BotCommand]
+    _user_slash_commands: list[BotCommand]
+    _admin_slash_commands: list[BotCommand]
+
+    def __new__(cls, guest_slash_commands: dict[str, str], user_slash_commands: dict[str, str], admin_slash_commands: dict[str, str]):
+        if cls._instance is None:
+            cls._instance = super().__new__(cls)
+            cls._instance._guest_slash_commands = guest_slash_commands or []
+            cls._instance._user_slash_commands = user_slash_commands or []
+            cls._instance._admin_slash_commands = admin_slash_commands or []
+
+        return cls._instance
+
+
     def __init__(self):
         self.bot = Bot()
         self.messages = Language().messages
+
 
     # * generate any /slash commands
     def set_command(
@@ -376,19 +391,24 @@ class DialogGenerator:
         )
         print(f"{ real_name } зашёл в раздел /{command_name} ✅")
 
+
     def set_slash_commands(self, active_user):
+        """ sets slash commands depending on a user access level """
         if active_user["access_level"] == "guest":
             self.bot._bot.set_my_commands([])
-            #! load from constructor
-            # self.bot._bot.set_my_commands(commands=GUEST_SLASH_COMMANDS)
+            self.bot._bot.set_my_commands(commands=self._guest_slash_commands)
+        
+        if active_user["access_level"] == "user":
+            self.bot._bot.set_my_commands([])
+            self.bot._bot.set_my_commands(commands=self._user_slash_commands)
 
-        # if "student" or "admin"
+        # if "admin"
         else:
             self.bot._bot.set_my_commands([])
-            #! load from constructor
-            # self.bot._bot.set_my_commands(commands=STUDENT_SLASH_COMMANDS)
+            self.bot._bot.set_my_commands(commands=self._admin_slash_commands)
 
         print("😎 slash commands set")
+
 
     def get_format_variable(self, variable_name: str, active_user: dict):
         match variable_name:
