@@ -21,3 +21,5 @@ REPLICA_NAME = dotenv.get("REPLICA_NAME")
 #? Dear admins, don't forget to start a chat with your bot (/start) 
 ADMIN_IDS = dotenv.get("ADMIN_IDS")
 SUPER_ADMIN_ID = int(dotenv.get("SUPER_ADMIN_ID"))
+
+DEFAULT_LANGUAGE = dotenv.get("DEFAULT_LANGUAGE")

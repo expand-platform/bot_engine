@@ -1,4 +1,4 @@
-from calendar import c
+from os import getenv
 from typing import Union
 
 from telebot.types import (
@@ -9,25 +9,38 @@ from telebot.types import (
 )
 from telebot.states.sync.context import StateContext
 
-from bot_engine.users.UserT import UserT
+if getenv("ENVIRONMENT") == "testing":
+    from bot.Bot import Bot
+    from users.UserT import UserT
 
-from bot_engine.database.MongoDB import MongoDB
-from bot_engine.utils.Logger import Logger
+    from database.MongoDB import MongoDB
+
+    from bot.Bot import Bot
+
+    from database.Cache import Cache
+    from database.Database import Database
+
+    from languages.Language import Language
+
+else:
+    from bot_engine.bot.Bot import Bot
+    from bot_engine.users.UserT import UserT
+
+    from bot_engine.database.MongoDB import MongoDB
+
+    from bot_engine.bot.Bot import Bot
+
+    from bot_engine.database.Cache import Cache
+    from bot_engine.database.Database import Database
+
+    from bot_engine.languages.Language import Language
+
 
 #! load to constructor
 # from dialogs.data.commands_list import GUEST_SLASH_COMMANDS, STUDENT_SLASH_COMMANDS
 
-from bot_engine.bot.Bot import Bot
-
-from bot_engine.database.Cache import Cache
-from bot_engine.database.Database import Database
-
-from bot_engine.languages.Language import Language
-
-
 class DialogGenerator:
     def __init__(self):
-        self.log = Logger().info
         self.bot = Bot()
         self.messages = Language().messages
 
@@ -218,7 +231,7 @@ class DialogGenerator:
                 else:
                     data_for_state = message.text
 
-                self.log(f"user's reply or selection: { data_for_state }")
+                print(f"user's reply or selection: { data_for_state }")
 
                 self.save_data_to_state(
                     variable_name=state_variable,
@@ -249,7 +262,7 @@ class DialogGenerator:
 
             # ? set keyboard, if needed
             if keyboard_with_before_message or keyboard_with_after_message:
-                self.log(
+                print(
                     f"create keyboard with text: {keyboard_with_before_message or keyboard_with_after_message}"
                 )
 
@@ -272,8 +285,8 @@ class DialogGenerator:
                         text="",
                     )
 
-                self.log(f"bot answered button (sends hints)")
-                self.log(f"active_user: { active_user }")
+                print(f"bot answered button (sends hints)")
+                print(f"active_user: { active_user }")
 
                 self.bot._bot.send_message(
                     chat_id=active_user["user_id"],
@@ -347,7 +360,7 @@ class DialogGenerator:
     def send_action_notification(self, active_user: dict, command_name):
         # check if user is admin
         if active_user["user_id"] in Database().admin_ids:
-            self.log(
+            print(
                 f"⚠ Admin here, don't sending notification: { active_user["real_name"] }"
             )
             return
@@ -361,7 +374,7 @@ class DialogGenerator:
         self.bot.tell_admins(
             messages=f"{ real_name } { last_name } @{ username } зашёл в раздел /{command_name} ✅"
         )
-        self.log(f"{ real_name } зашёл в раздел /{command_name} ✅")
+        print(f"{ real_name } зашёл в раздел /{command_name} ✅")
 
     def set_slash_commands(self, active_user):
         if active_user["access_level"] == "guest":
@@ -375,7 +388,7 @@ class DialogGenerator:
             #! load from constructor
             # self.bot._bot.set_my_commands(commands=STUDENT_SLASH_COMMANDS)
 
-        self.log("😎 slash commands set")
+        print("😎 slash commands set")
 
     def get_format_variable(self, variable_name: str, active_user: dict):
         match variable_name:
@@ -522,11 +535,11 @@ class DialogGenerator:
             data = self.get_format_variable(variable, user)
             formatting_data.append(data)
 
-        # self.log(f"formatting_data (format_message): { formatting_data }")
+        # print(f"formatting_data (format_message): { formatting_data }")
 
         for message, format_data in zip(messages, formatting_data):
-            # self.log(f"message (format_message): { message }")
-            # self.log(f"format_data (format_message): { format_data }")
+            # print(f"message (format_message): { message }")
+            # print(f"format_data (format_message): { format_data }")
 
             self.bot.send_message_with_variable(
                 chat_id=user["user_id"],
@@ -535,7 +548,7 @@ class DialogGenerator:
                 reply_markup=reply_markup,
             )
 
-        # self.log(f"format messages with no errors 🦸‍♀️")
+        # print(f"format messages with no errors 🦸‍♀️")
 
     def choose_database_method(
         self,
@@ -565,7 +578,7 @@ class DialogGenerator:
                 Database().make_monthly_reset()
 
             case "update_lessons":
-                # self.log(f"updating_lessons...")
+                # print(f"updating_lessons...")
                 messages = Language().messages
 
                 is_report_allowed = Database().check_done_reports_limit(
@@ -620,7 +633,7 @@ class DialogGenerator:
 
             case "update_user":
                 user_to_change = Cache().get_user(data_from_state["user_id"])
-                self.log(f"🐍 user_to_change: {user_to_change}")
+                print(f"🐍 user_to_change: {user_to_change}")
 
                 Database().update_user(
                     user=user_to_change,
@@ -629,10 +642,10 @@ class DialogGenerator:
                 )
             
             case "update_user.payment_status":
-                self.log(f"state dat (2)  { data_from_state }")
+                print(f"state dat (2)  { data_from_state }")
 
                 user_to_change = Cache().get_user(data_from_state["user_id"])
-                self.log(f"🐍 user_to_change: {user_to_change}")
+                print(f"🐍 user_to_change: {user_to_change}")
 
                 Database().update_user(
                     user=user_to_change,
@@ -658,14 +671,14 @@ class DialogGenerator:
                 print("🐍 new_value (choose_database_method): ", new_value)
 
                 for user in cache_user:
-                    self.log(f"user: {user}")
+                    print(f"user: {user}")
 
                     if user["access_level"] == category:
                         Database().update_user(
                             user=user, key=user_property, new_value=new_value
                         )
 
-                self.log(f"Bulk editor: users updated successfully 😎")
+                print(f"Bulk editor: users updated successfully 😎")
 
             case "show_user":
                 selected_user: UserT = Cache().get_user(
@@ -681,8 +694,8 @@ class DialogGenerator:
                     if property_count % 2 == 0:
                         user_info += "\n"
 
-                    self.log(f"key: {key}")
-                    self.log(f"key: {value}")
+                    print(f"key: {key}")
+                    print(f"key: {value}")
 
                     user_info += f"`{ key }`: *{ value }*\n"
                     property_count += 1
@@ -794,7 +807,7 @@ class DialogGenerator:
                     }
 
             case "selected_user":
-                self.log(f"state.data(): { vars(state.data())["data"] }")
+                print(f"state.data(): { vars(state.data())["data"] }")
 
                 state_object = {}
 
@@ -807,21 +820,21 @@ class DialogGenerator:
                         user_id = int(
                             data.get("id").removeprefix(f"{handler_prefix}:user_id:")
                         )
-                        self.log(f"user_id (get_state_data): { user_id }")
+                        print(f"user_id (get_state_data): { user_id }")
                         state_object["user_id"] = user_id
 
                     if data["user_property"]:
                         user_property_name = data.get("user_property").removeprefix(
                             f"{handler_prefix}:user_property:"
                         )
-                        self.log(
+                        print(
                             f"user_property (get_state_data): { user_property_name } -> {type(user_property_name)}"
                         )
                         state_object["user_property"] = user_property_name
 
                     if data["new_value"]:
                         new_value = data.get("new_value")
-                        self.log(f"new_value (get_state_data): { new_value }")
+                        print(f"new_value (get_state_data): { new_value }")
                         state_object["new_value"] = self.set_correct_property_type(
                             property_name=user_property_name, value_to_correct=new_value
                         )
@@ -995,10 +1008,10 @@ class DialogGenerator:
             #! hometask, скорее всего, не будет
             # case "hometask_actions":
             #     for key, value in self.messages["hometask"]["buttons"].items():
-            #         self.log(f"key: {key}")
-            #         self.log(f"key: {value}")
+            #         print(f"key: {key}")
+            #         print(f"key: {value}")
 
-            #         self.log(
+            #         print(
             #             f"button callback data: {handler_prefix}:{buttons_prefix}:{key}"
             #         )
 
@@ -1027,14 +1040,14 @@ class DialogGenerator:
                 for user in cache_users:
                     user_categories.add(user["access_level"])
 
-                self.log(
+                print(
                     f"🐍 unique user_categories (create_inline_keyboard):  {user_categories}"
                 )
 
                 for category in user_categories:
-                    # self.log(f"unique category: {category}")
+                    # print(f"unique category: {category}")
 
-                    self.log(
+                    print(
                         f"button callback data: {handler_prefix}:{buttons_prefix}:{category}"
                     )
 
@@ -1111,6 +1124,6 @@ class DialogGenerator:
         words_array = callback_text.split(":")
         length = len(words_array)
 
-        self.log(f"true button value: { words_array[length - 1] }")
+        print(f"true button value: { words_array[length - 1] }")
 
         return words_array[length - 1].strip()
