@@ -16,7 +16,7 @@ if getenv("ENVIRONMENT") == "testing":
     from database.Cache import Cache
 
 else:
-    from data.env import ENVIRONMENT, BOT_TOKEN, ADMIN_IDS, SUPER_ADMIN_ID
+    from bot_engine.data.env import ENVIRONMENT, BOT_TOKEN, ADMIN_IDS, SUPER_ADMIN_ID
     from bot_engine.data.config import USER_ID_KEY
     from bot_engine.users.UserT import UserT  
 
