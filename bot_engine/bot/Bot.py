@@ -66,6 +66,11 @@ class Bot:
             timeout=5, skip_pending=True, long_polling_timeout=20
         )
 
+    def disconnect(self) -> None:
+        """kills the active bot instance, drops connection"""
+        self._bot.stop_bot()
+        print("бот выключен ❌")
+
 
     def get_bot_data(self, bot: TeleBot, requested_data: str) -> str:
         """gets bot's name, @username etc"""
@@ -85,10 +90,7 @@ class Bot:
         self._bot.setup_middleware(StateMiddleware(self._bot))
 
 
-    def disconnect_bot(self) -> None:
-        """kills the active bot instance, drops connection"""
-        self._bot.stop_bot()
-        print("бот выключен ❌")
+  
 
 
     def tell_admins(self, messages: Union[str, list[str]]):

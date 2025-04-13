@@ -4,3 +4,4 @@ dist/
 .env
 .pytest_cache/
 src/data/initial_users.py
+bot-engine.code-workspace
