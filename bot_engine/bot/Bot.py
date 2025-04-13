@@ -20,18 +20,18 @@ else:
 class Bot:
     """class to connect and run bot"""
 
-    _new_bot_instance = None
+    _instance = None
     _bot: TeleBot = None
 
     def __new__(cls, *args, **kwargs):
-        if cls._new_bot_instance is None:
-            cls._new_bot_instance = super(Bot, cls).__new__(cls)
+        if cls._instance is None:
+            cls._instance = super(Bot, cls).__new__(cls)
 
-            cls._new_bot_instance._bot = TeleBot(
+            cls._instance._bot = TeleBot(
                 token=BOT_TOKEN, use_class_middlewares=True
             )
 
-        return cls._new_bot_instance
+        return cls._instance
 
 
     def __init__(self):
@@ -86,9 +86,6 @@ class Bot:
         self._bot.add_custom_filter(AccessLevelFilter(self._bot))
 
         self._bot.setup_middleware(StateMiddleware(self._bot))
-
-
-  
 
 
     def tell_admins(self, messages: Union[str, list[str]]):
