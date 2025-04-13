@@ -28,7 +28,7 @@ class Language:
     ):
         if not self.__class__._is_initialized:
             if menu_commands is None or bot_messages is None:
-                raise ValueError("First initialization requires commands and messages")
+                raise ValueError("🔴 First 'Language' class initialization requires commands and messages")
 
             self.active_lang = DEFAULT_LANGUAGE
             self.commands = menu_commands

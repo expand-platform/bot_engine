@@ -39,22 +39,19 @@ else:
 
 class DialogGenerator:
     _instance = None
+    _is_initialized = False
 
-    _guest_slash_commands: list[BotCommand]
-    _user_slash_commands: list[BotCommand]
-    _admin_slash_commands: list[BotCommand]
-
-    def __new__(cls, guest_slash_commands: dict[str, str], user_slash_commands: dict[str, str], admin_slash_commands: dict[str, str]):
+    def __new__(cls, *args, **kwargs):
         if cls._instance is None:
             cls._instance = super().__new__(cls)
-            cls._instance._guest_slash_commands = guest_slash_commands or []
-            cls._instance._user_slash_commands = user_slash_commands or []
-            cls._instance._admin_slash_commands = admin_slash_commands or []
-
         return cls._instance
 
 
-    def __init__(self, guest_slash_commands: dict[str, str], user_slash_commands: dict[str, str], admin_slash_commands: dict[str, str]):
+    def __init__(self, guest_slash_commands: dict[str, str] = [], user_slash_commands: dict[str, str] = None, admin_slash_commands: dict[str, str] = None):
+        if not self.__class__._is_initialized:
+            if user_slash_commands is None or admin_slash_commands is None:
+                raise ValueError("🔴 First 'DialogGenerator' class initialization requires menu commands!")
+
         self.bot = Bot()
         self.messages = Language().messages
 
