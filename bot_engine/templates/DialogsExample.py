@@ -1,12 +1,4 @@
-# from src.utils.Logger import Logger
-# from src.languages.Language import Language
-
-# from src.bot.Bot import Bot
-# from src.dialogs.DialogGenerator import DialogGenerator
-
-# from src.bot.States import VersionSequenceStates, UpdateUserSequenceStates, SeeUserSequenceStates, BulkEditorStates, RemoveUserStates, AdminPaymentStates, AdminScheduleStates
-
-#! Этот файл создаётся руками
+#! Этот файл создаётся руками в вашем проекте
 """ 
     ? Admin commands: 
     
@@ -32,18 +24,7 @@
     ? /su - see user 
     ? /uu - update user 
     ? /be - bulk edit user groups 
-    
-    #! /income: how much money earned in this month
-
-    #! /payment for admin: 
-      - ✅ Илья (1800 грн)  
-      - ❌ Никита (1200 грн)
-
-      - /ps (payment stats)
-      - Выплатили: $30 (3000 грн) 
-      - Не выплатили: $70 (7000 грн)
 """
-
 
 
 class AdminDialogs:
@@ -55,6 +36,7 @@ class AdminDialogs:
         self.dialog_generator = DialogGenerator()
         self.messages = Language().messages
         
+    
     def set_admin_dialogs(self):
         #? /clean
         self.dialog_generator.simple_admin_command(
@@ -110,19 +92,6 @@ class AdminDialogs:
             bot_after_message=self.messages["monthly_data_refresh"]["success"],
         )
 
-        #? /income: how much earned in this month
-        self.dialog_generator.make_dialog(
-            access_level=["admin"],
-            handler_type="command",
-            command_name="income",
-
-            active_state=None,
-            next_state=None,
-
-            formatted_messages=[self.messages["income"]["count"], self.messages["income"]["uah_amount"], self.messages["income"]["average"]],
-            formatted_variables=["students.count", "students.uah_amount", "students.average"],
-        )
-        
         
         #? /nv 
         #? new_version (step 1) -> prompt for version number 
