@@ -1,11 +1,15 @@
+import signal
 from os import getenv
 from threading import Thread
+from dataclasses import dataclass, field
+
+from typing import Callable
 
 import uvicorn
-
-from keyboard import add_hotkey
 from fastapi import FastAPI
 from contextlib import asynccontextmanager
+from keyboard import add_hotkey
+
 
 if getenv("ENVIRONMENT") == "testing":
     from data.env import ENVIRONMENT
@@ -16,98 +20,86 @@ else:
     from bot_engine.bot.Bot import Bot
 
 
+#! Сюда же можно передавать ещё Threads и задачи, чтобы просто расширить 
+
+@dataclass
 class FastAPIServer:
-    """FastAPI server. You can easily extend it with your needs"""
+    """FastAPI server with thread & signal handling."""
 
-    def __init__(self, bot: Bot = None):
-        """constructor needs bot instance to run"""
-        # threads to run things concurrently
-        self.bot_thread: Thread = None
-        self.hotkey_listener_thread: Thread = None
+    Bot: Bot 
 
-        self.bot = bot or Bot()
-        self.app = FastAPI(lifespan=self.start_server)
+    #? neccessary customizable bot dependencies
+    components: list[Callable] = field(default_factory=list)
+    
+    #? private data
+    _app: FastAPI = field(init=False)
+    _bot_thread: Thread = field(init=False, default=None)
+    _hotkey_listener_thread: Thread = field(init=False, default=None)
+
+
+    def __post_init__(self):
+        self._app = FastAPI(lifespan=self._lifespan)
+        self._setup_signal_handlers()
+
 
     @asynccontextmanager
-    async def start_server(self, app: FastAPI):
-        print("сервер FastAPI / uvicorn включён 👀")
+    async def _lifespan(self, app: FastAPI):
+        print("⚡ FastAPI server started.")
         self.start_threads()
-
         try:
             yield
-
-        except KeyboardInterrupt:
-            print("Manual shutdown triggered.")
-
         finally:
-            self.shut_server_down()
+            self.shutdown()
+
+    def set_bot_components(self):
+        for bot_component in self.components:
+            print(f"🔋 Executing: {bot_component.__name__}")
+            bot_component()
 
     def start_threads(self):
-        if ENVIRONMENT == "development" or ENVIRONMENT == "testing":
-            self.listen_to_ctrl_c_thread()
+        if ENVIRONMENT in {"development", "testing"}:
+            self._start_ctrl_c_listener()
+        
+        self._run_bot_components()
 
-        if ENVIRONMENT == "production":
-            pass
 
-        self.start_bot_thread()
+    def _run_bot_components(self):
+        self.set_bot_components()
 
-    def start_bot_thread(self):
-        """
-        Things you run on a server startup.
-        For example, run neccessary bot components to work
+        #! maybe we can also use a battery here?
+        self._bot_thread = Thread(target=self.Bot.start, name="BotThread")
+        self._bot_thread.start()
 
-        1. Run DB
-            database = Database()
-            database.sync_cache_and_remote_users()
 
-        2. Prepare some intermediary stuff like scheduling
-            database.mongoDB.ScheduleDays.check_days_integrity()
+    def _start_ctrl_c_listener(self):
+        self._hotkey_listener_thread = Thread(target=self._handle_ctrl_c, name="HotkeyListener")
+        self._hotkey_listener_thread.start()
 
-        3. Run bot components, like dialogs, filters etc
-            BotDialogs().enable_dialogs()
 
-        3. Last one: start your bot
-        #? start bot
-        # self.bot_thread = Thread(target=self.bot.start)
-        # self.bot_thread.start()
-        """
-        self.bot_thread = Thread(target=self.bot.start)
-        self.bot_thread.start()
+    def _handle_ctrl_c(self):
+        add_hotkey("ctrl+c", self.shutdown)
 
-    def listen_to_ctrl_c_thread(self):
-        self.hotkey_listener_thread = Thread(target=self.handle_ctrl_c)
-        self.hotkey_listener_thread.start()
 
-    def handle_ctrl_c(self):
-        add_hotkey("ctrl+c", self.shut_server_down)
+    def _setup_signal_handlers(self):
+        signal.signal(signal.SIGINT, self._signal_handler)
+        signal.signal(signal.SIGTERM, self._signal_handler)
 
-    def shut_server_down(self):
-        """
-        Things to run when server is shutting down.
 
-        For example:
+    def _signal_handler(self, signum, frame):
+        print(f"⚠️ Signal received: {signal.Signals(signum).name}")
+        self.shutdown()
 
-        self.bot.disconnect()
+
+    def shutdown(self):
+        print("🛑 Shutting down...")
+
+        self.Bot.disconnect()
         uvicorn.server.Server.should_exit = True
 
-        if ENVIRONMENT == "development" or ENVIRONMENT == "testing":
-            self.hotkey_listener_thread.join()
+        if self._hotkey_listener_thread and self._hotkey_listener_thread.is_alive():
+            self._hotkey_listener_thread.join()
 
-        if ENVIRONMENT == "production":
-            pass
+        if self._bot_thread and self._bot_thread.is_alive():
+            self._bot_thread.join()
 
-        self.bot_thread.join()
-        print("Сервер выключен ❌")
-
-        """
-        self.bot.disconnect()
-        uvicorn.server.Server.should_exit = True
-
-        if ENVIRONMENT == "development" or ENVIRONMENT == "testing":
-            self.hotkey_listener_thread.join()
-
-        if ENVIRONMENT == "production":
-            pass
-
-        self.bot_thread.join()
-        print("Сервер выключен ❌")
+        print("❌ FastAPI server stopped.")

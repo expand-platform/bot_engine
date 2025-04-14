@@ -1,6 +1,15 @@
+from os import getenv
+
 from dataclasses import dataclass, field
-from Locale import Locale
 from typing import ClassVar
+
+
+if getenv("ENVIRONMENT") == "testing":
+    from languages.Locale import Locale
+
+else:
+    from bot_engine.languages.Locale import Locale
+
 
 
 @dataclass
@@ -9,7 +18,7 @@ class Languages:
     languages: ClassVar[dict[str, Locale]] = {}
 
     def add_locale(self, locale: Locale):
-        self.languages[locale.language] = locale
+        self.languages[locale.lang] = locale
 
     def get_active_locale(self) -> Locale | None:
         return self.languages.get(self.active_lang)
