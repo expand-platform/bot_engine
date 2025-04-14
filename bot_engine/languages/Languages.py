@@ -19,6 +19,7 @@ class Languages:
 
     def add_locale(self, locale: Locale):
         self.languages[locale.lang] = locale
+        print(f"🔷 {locale.lang} is added to languages!")
 
     def get_active_locale(self) -> Locale | None:
         return self.languages.get(self.active_lang)
