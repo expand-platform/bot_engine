@@ -21,7 +21,7 @@ if getenv("ENVIRONMENT") == "testing":
     from database.Cache import Cache
     from database.Database import Database
 
-    from languages.Language import Language
+    from bot_engine.languages.Languages import Languages
 
 else:
     from bot_engine.bot.Bot import Bot
@@ -34,7 +34,7 @@ else:
     from bot_engine.database.Cache import Cache
     from bot_engine.database.Database import Database
 
-    from bot_engine.languages.Language import Language
+    from bot_engine.languages.Languages import Languages
 
 
 class DialogGenerator:

@@ -3,16 +3,16 @@ from os import getenv
 if getenv("ENVIRONMENT") == "testing":
     from bot.Bot import Bot
     from dialogs.DialogGenerator import DialogGenerator
-    from languages.Language import Language
+    from bot_engine.languages.Languages import Languages
 
 else:
     from bot_engine.bot.Bot import Bot
     from bot_engine.dialogs.DialogGenerator import DialogGenerator
-    from bot_engine.languages.Language import Language
+    from bot_engine.languages.Languages import Languages
 
 
 class BotDialogs:
-    def __init__(self):
+    def __init__(self, bot: Bot, dialog_generator: DialogGenerator, language: Languages):
         """
             Зависимости, которые было у меня ранее: 
             1. Бот
@@ -20,9 +20,9 @@ class BotDialogs:
             3. И тексты
             
         """
-        self.Bot = Bot()
-        self.DialogGenerator = DialogGenerator()
-        self.messages = Language().messages    
+        self.Bot = bot
+        self.DialogGenerator = dialog_generator
+        self.Language = language    
 
 
     def set_dialogs(self):

@@ -4,7 +4,7 @@ from apscheduler.triggers.cron import CronTrigger
 
 
 from bot_engine.utils.Logger import Logger
-from bot_engine.languages.Language import Language
+from bot_engine.languages.Languages import Language
 
 from bot_engine.bot.Bot import Bot
 from bot_engine.database.Database import Database
