@@ -25,6 +25,8 @@ twine:
 search: 
 	poetry search bot-engine
 
+ready:
+	git add . && git commit && git push
 
 # install-locally:
 # 	pip install dist/bot_engine-0.1.0-py3-none-any.whl

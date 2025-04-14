@@ -5,11 +5,11 @@ from datetime import datetime
 
 if getenv("ENVIRONMENT") == "testing":
     from users.UserT import UserT
-    from bot_engine.languages.Languages import Language
+    from bot_engine.languages.Languages import Languages
 
 else:
     from bot_engine.users.UserT import UserT
-    from bot_engine.languages.Languages import Language
+    from bot_engine.languages.Languages import Languages
 
 
 

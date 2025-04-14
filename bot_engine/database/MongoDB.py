@@ -37,7 +37,7 @@ class MongoDB:
             cls._mongoDB_instance.replica_db = cls._mongoDB_instance._client[
                 REPLICA_NAME
             ]
-            print(f"База данных {DATABASE_NAME} подключена!")
+            print(f"🏗 База данных {DATABASE_NAME} подключена!")
 
         return cls._mongoDB_instance
 
